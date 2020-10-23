@@ -22,7 +22,7 @@ class _TransactionListState extends State<TransactionList> {
       Colors.yellow, Colors.red, Colors.pink, Colors.purple, Colors.deepOrangeAccent
     ] ;
 
-   _bgTheme = changingColor[Random().nextInt(5)got];
+   _bgTheme = changingColor[Random().nextInt(5)];
     super.initState();
   }
   @override
