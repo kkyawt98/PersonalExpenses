@@ -44,7 +44,7 @@ class MyHomePage extends StatefulWidget {
   _MyHomePageState createState() => _MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
+class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver{
   final List<Transaction> _userTransactions = [];
 
   List<Transaction> get _recentTransaction {
@@ -90,8 +90,26 @@ class _MyHomePageState extends State<MyHomePage> {
   bool _showChart = false;
 
   @override
+  void initState() {
+    WidgetsBinding.instance.addObserver(this);
+    super.initState();
+  }
+
+  @override
+  void _changeAppLifeCycleState(AppLifecycleState state){
+
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
+    final mediaQuery = MediaQuery.of(context);
+    final isLandscape = mediaQuery.orientation == Orientation.landscape;
     final appBar = AppBar(
       title: Text("Personal Expenses"),
       actions: <Widget>[
@@ -106,44 +124,55 @@ class _MyHomePageState extends State<MyHomePage> {
 
     final _showList = Container(
         height: (MediaQuery.of(context).size.height -
-            appBar.preferredSize.height - MediaQuery.of(context).padding.top) * 0.7,
+            appBar.preferredSize.height - mediaQuery.padding.top) * 0.7,
         child: TransactionList(_userTransactions, _deleteTransaction)
     );
 
+    Widget _buildLandscapeContent(){
+return Row(
+  mainAxisAlignment: MainAxisAlignment.center,
+  children: <Widget>[
+    Text('Show Chart'),
+    Switch.adaptive(
+      activeColor : Theme.of(context).accentColor,
+      value: _showChart,
+      onChanged: (val){
+        setState(() {
+          _showChart = val;
+        });
+      },
+    ),
+  ],
+);
+    }
+
+    Widget _buildPortraitContent(){
+      return Container(
+          height: (MediaQuery.of(context).size.height -
+              appBar.preferredSize.height - mediaQuery.padding.top) * 0.3,
+          child: Chart(_recentTransaction)
+      );
+    }
+
     return Scaffold(
       appBar: appBar,
-      body: SingleChildScrollView(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.start,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: <Widget>[
-            if (isLandscape) Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                Text('Show Chart'),
-                Switch(
-                  value: _showChart,
-                  onChanged: (val){
-                    setState(() {
-                      _showChart = val;
-                    });
-                  },
-                ),
-              ],
-            ),
-           if(!isLandscape)  Container(
-               height: (MediaQuery.of(context).size.height -
-                   appBar.preferredSize.height - MediaQuery.of(context).padding.top) * 0.3,
-               child: Chart(_recentTransaction)
-           ),
-           if(!isLandscape) _showList,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              if (isLandscape) _buildLandscapeContent(),
+             if(!isLandscape)  _buildPortraitContent(),
+             if(!isLandscape) _showList,
 
-           if (isLandscape) _showChart ? Container(
-              height: (MediaQuery.of(context).size.height -
-                  appBar.preferredSize.height - MediaQuery.of(context).padding.top) * 0.7,
-              child: Chart(_recentTransaction)
-            ) : _showList
-          ],
+             if (isLandscape) _showChart ? Container(
+                height: (MediaQuery.of(context).size.height -
+                    appBar.preferredSize.height - mediaQuery.padding.top) * 0.7,
+                child: Chart(_recentTransaction)
+              ) : _showList
+            ],
+          ),
         ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
@@ -154,3 +183,5 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 }
+
+
